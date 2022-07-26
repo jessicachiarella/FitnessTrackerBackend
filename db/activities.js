@@ -1,4 +1,6 @@
+/* eslint-disable no-useless-catch */
 const client = require("./client");
+
 
 // database functions
 async function createActivity({ name, description }) {
@@ -15,7 +17,7 @@ async function createActivity({ name, description }) {
     );
  return activity
   } catch (error) {
-    console.error(error)
+    throw error
   }
 }
 
@@ -30,7 +32,7 @@ async function getAllActivities() {
 
     return rows;
   } catch (error) {
-    console.error(error);
+    throw error;
   }
 }
 async function getActivityById(id) {
@@ -48,7 +50,7 @@ async function getActivityById(id) {
   
     return activity
   } catch (error) {
-    console.error(error)
+    throw error
   }
 }
 
@@ -64,7 +66,7 @@ async function getActivityByName(name) {
     );
     return activity
   } catch (error) {
-    console.error(error)
+    throw error
   }
 }
 
@@ -76,7 +78,7 @@ async function attachActivitiesToRoutines(routines) {
   if (!routineIds?.length) return [];
   
   try {
-    // get the activities, JOIN with routine_activities (so we can get a routineId), and only those that have those routine ids on the routine_activities join
+    //get the activities, JOIN with routine_activities (so we can get a routineId), and only those that have those routine ids on the routine_activities join
     const { rows: activities } = await client.query(`
       SELECT activities.*, routine_activities.duration, routine_activities.count, routine_activities.id AS "routineActivityId", routine_activities."routineId"
       FROM activities 
@@ -93,7 +95,7 @@ async function attachActivitiesToRoutines(routines) {
     }
     return routinesToReturn;
   } catch (error) {
-    console.error(error);
+    throw error;
   }
 }
 
@@ -115,7 +117,7 @@ async function updateActivity({ id, ...fields }) {
       );
       return await getActivityById(id)
     } } catch (error){
-      console.error(error);
+      throw error;
     }
 }
 
