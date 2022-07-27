@@ -2,6 +2,7 @@
 const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
+const bcrypt = require('bcrypt');
 const { JWT_SECRET } = process.env;
 const {
   createUser,
@@ -77,12 +78,11 @@ router.post('/login', async (req, res, next) => {
   
     try {
       const user = await getUserByUsername(username);
-    console.log(user.password, "PPPPPPPPPPPPPPPPP");
-    console.log(password, "0000000000000000000")
-      if (user && user.password == password) {
-        
+      const hashedPassword = user.password;
+      const passwordsMatch = await bcrypt.compare(password, hashedPassword);
+      if (passwordsMatch) {
         const token = jwt.sign(user, JWT_SECRET)
-        res.send({ message: "you're logged in!", token: `${token}` });
+        res.send({ user, message: "you're logged in!", token: `${token}` });
       } else {
         next({ 
           name: 'IncorrectCredentialsError', 
