@@ -59,7 +59,7 @@ async function getRoutineActivitiesByRoutine({ id }) {
     await client.query (`
     SELECT *
     FROM routine_activities
-    WHERE id=${id}
+    WHERE routine_activities.id=${id}
     `);
     return routine_activity
   } catch (error){
@@ -67,11 +67,62 @@ async function getRoutineActivitiesByRoutine({ id }) {
   }
 }
 
-async function updateRoutineActivity({ id, ...fields }) {}
+async function updateRoutineActivity({ id, ...fields }) {
+  const setString = Object.keys(fields)
+    .map((key, index) => `"${key}"=$${index + 1}`)
+    .join(", ");
 
-async function destroyRoutineActivity(id) {}
+  try {
+    if (setString.length > 0) {
+      await client.query(
+        `
+        UPDATE routine_activities
+        SET ${setString}
+        WHERE routine_activities.id=${id}
+        RETURNING *;
+      `,
+        Object.values(fields)
+      );
+      return await getRoutineActivityById(id)
+    } } catch (error){
+      throw error;
+    }
+}
 
-async function canEditRoutineActivity(routineActivityId, userId) {}
+async function destroyRoutineActivity(id) {
+  try {
+    const{ rows: [routine_activity] } = await client.query(`
+    DELETE 
+    FROM routine_activities 
+    WHERE routine_activities."routineId"=$1
+    RETURNING *
+  `,
+  [id]
+      );
+  
+    return routine_activity;
+  } catch (error) {
+    throw error
+  }
+}
+
+async function canEditRoutineActivity(routineActivityId, userId) {
+try {
+  const { rows:[routine] } = await client.query(
+      
+    `SELECT *
+     FROM routine_activities 
+     JOIN routines ON routine_activities."routineId"=routines.id
+     AND routine_activities.id=$1
+  `,
+  [routineActivityId]);
+
+  return routine.creatorId === userId
+
+  } catch (error) {
+    throw error;
+  }
+}
 
 module.exports = {
   getRoutineActivityById,
