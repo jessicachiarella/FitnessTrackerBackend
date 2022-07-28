@@ -112,8 +112,6 @@ router.get("/:username/routines", async (req, res, next) => {
     const { username } = req.params;
     try {
         const user = await getUserByUsername(username)
-        console.log(req.user, "THIS IS USER FROM REQ USER")
-        console.log(user, "THIS IS USER FROM GETUSERBYUSERNAME")
         if(!user){
             next({ 
                 name: 'UserNotfound', 
