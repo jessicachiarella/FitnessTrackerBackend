@@ -4,11 +4,13 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const bcrypt = require('bcrypt');
 const { JWT_SECRET } = process.env;
+const { requireUser } = require("./utils");
 const {
   createUser,
   getUser,
   getUserById,
   getUserByUsername,
+  getPublicRoutinesByUser
 } = require("../db");
 
 //POST /api/users/register
@@ -96,6 +98,25 @@ router.post('/login', async (req, res, next) => {
 
 // GET /api/users/me
 
+router.get("/me", requireUser, async (req, res, next)=> {
+    try {
+        res.send(req.user)
+    } catch (error) {
+        next (error)
+    }
+})
+
 // GET /api/users/:username/routines
+router.get("/:username/routines", requireUser, async (req, res, next)=> { 
+    try {
+        const { username } = req.params;
+        const [ routine ] = await getPublicRoutinesByUser( username );
+        const routineActivities = routine.activities
+        console.log(routineActivities, "9999999999999999999")
+        res.send( routine.activities )
+    } catch (error) {
+        next (error)
+    }
+})
 
 module.exports = router;

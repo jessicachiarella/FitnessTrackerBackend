@@ -42,6 +42,12 @@ router.use(async (req, res, next) => {
     }
   });
 
+  router.use((req, res, next) =>{
+    if(req.user){
+        res.send(req.user)
+    }
+    next()
+  })
 // ROUTER: /api/users
 const usersRouter = require('./users');
 router.use('/users', usersRouter);
