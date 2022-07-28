@@ -10,7 +10,8 @@ const {
   getUser,
   getUserById,
   getUserByUsername,
-  getPublicRoutinesByUser
+  getPublicRoutinesByUser,
+  getAllRoutinesByUser
 } = require("../db");
 
 //POST /api/users/register
@@ -107,16 +108,31 @@ router.get("/me", requireUser, async (req, res, next)=> {
 })
 
 // GET /api/users/:username/routines
-router.get("/:username/routines", requireUser, async (req, res, next)=> { 
+router.get("/:username/routines", async (req, res, next) => { 
+    const { username } = req.params;
     try {
-        const { username } = req.params;
-        const [ routine ] = await getPublicRoutinesByUser( username );
-        const routineActivities = routine.activities
-        console.log(routineActivities, "9999999999999999999")
-        res.send( routine.activities )
-    } catch (error) {
-        next (error)
-    }
-})
+        const user = await getUserByUsername(username)
+        console.log(req.user, "THIS IS USER FROM REQ USER")
+        console.log(user, "THIS IS USER FROM GETUSERBYUSERNAME")
+        if(!user){
+            next({ 
+                name: 'UserNotfound', 
+                message: 'User not found'
+              });}
+              else if((req.user && req.user.id === user.id)) {
+                const userR = await getAllRoutinesByUser(user)
+                res.send(userR)
+              } else {
+        const publicR = await getPublicRoutinesByUser(user);
+        res.send(publicR)
+
+              }
+        
+
+        
+    } catch ({ name, message }) {
+    next ({ name, message })
+    }}
+ )
 
 module.exports = router;
