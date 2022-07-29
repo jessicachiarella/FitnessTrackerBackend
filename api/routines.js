@@ -1,5 +1,5 @@
 const express = require('express');
-const { getAllPublicRoutines, createRoutine } = require('../db');
+const { getAllPublicRoutines, createRoutine, getRoutineById, updateRoutine } = require('../db');
 const router = express.Router();
 const { requireUser } = require("./utils");
 
@@ -36,6 +36,31 @@ router.post('/', requireUser, async (req, res, next) => {
 
 
 // PATCH /api/routines/:routineId
+router.patch('/:routineId', requireUser, async (req, res, next) => {
+    const { routineId } = req.params;
+    const { name, goal, isPublic } = req.body;
+    
+    try {
+        const id = req.params.routineId
+    const originalRoutine = await getRoutineById(routineId);
+    if(originalRoutine.creatorId !== req.user.id){
+        res.status(403);
+        next({
+            name: 'UnauthorizedUpdaterError',
+            message: `User ${req.user.username} is not allowed to update ${originalRoutine.name}`
+
+        });}
+
+        else{
+            const updatedRoutine = await updateRoutine({id: id, name, goal, isPublic});
+            res.send( updatedRoutine )}
+  
+    }
+    
+     catch ({ name, message }) {
+      next({ name, message });
+    }
+  });
 
 // DELETE /api/routines/:routineId
 
