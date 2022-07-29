@@ -31,13 +31,7 @@ async function getRoutineById(id) {
     `,
     [id]
     );
-    if (!routine) {
-      throw {
-        name: "RoutineNotFoundError",
-        message: "Could not find a routine with that id",
-      };
       
-    }
     return routine;
   } catch (error) {
     throw error

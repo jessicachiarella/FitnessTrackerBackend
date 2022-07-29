@@ -7,7 +7,7 @@ const { requireUser } = require("./utils");
 router.get("/:activityId/routines", async (req, res, next)=> {
     const { activityId } = req.params;
     try {
-        const  activities   = await getPublicRoutinesByActivity({ id: activityId })
+        const activities = await getPublicRoutinesByActivity({ id: activityId })
         if (!activities.length){
             next({
               name: "ActivityDoesn'tExistError",

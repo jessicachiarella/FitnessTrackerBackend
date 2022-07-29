@@ -1,5 +1,5 @@
 const express = require('express');
-const { getAllPublicRoutines, createRoutine, getRoutineById, updateRoutine } = require('../db');
+const { getAllPublicRoutines, createRoutine, getRoutineById, updateRoutine, destroyRoutine, getRoutineActivityById, addActivityToRoutine } = require('../db');
 const router = express.Router();
 const { requireUser } = require("./utils");
 
@@ -63,7 +63,45 @@ router.patch('/:routineId', requireUser, async (req, res, next) => {
   });
 
 // DELETE /api/routines/:routineId
+router.delete('/:routineId', requireUser, async (req,res,next)=>{
+    const { routineId } = req.params;
+    const {username} = req.user
+    
+    try{
+        const routine = await getRoutineById(routineId);
+        if (routine.creatorId !== req.user.id){
+            res.status(403)
+            next({
+                name:"User not found",
+                message: `User ${username} is not allowed to delete ${routine.name}`
+            })}else{
+                 await destroyRoutine(routine.id)
+                res.send(routine)
+            }
+
+    }catch({ name, message }){
+        next({ name, message })
+    }
+})
 
 // POST /api/routines/:routineId/activities
+router.post('/:routineId/activities', async (req,res,next)=>{
+    const { routineId } = req.params
+    const { activityId, count, duration} = req.body
+    const updatedActivityId = await getRoutineActivityById(activityId)
+    try {
+        if(updatedActivityId){
+            next({
+                name: "issue found",
+                message: `Activity ID ${activityId} already exists in Routine ID ${routineId}`
+            })
+    }else{
+        const updatedRoutine = await addActivityToRoutine({routineId, activityId, count, duration})
+        res.send(updatedRoutine)
+    }
+} catch({ name, message }) {
+        next({ name, message })
+    }
+})
 
 module.exports = router;
