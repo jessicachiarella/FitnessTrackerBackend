@@ -2,16 +2,14 @@
 const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
-const bcrypt = require('bcrypt');
+const bcrypt = require("bcrypt");
 const { JWT_SECRET } = process.env;
 const { requireUser } = require("./utils");
 const {
   createUser,
-  getUser,
-  getUserById,
   getUserByUsername,
   getPublicRoutinesByUser,
-  getAllRoutinesByUser
+  getAllRoutinesByUser,
 } = require("../db");
 
 //POST /api/users/register
@@ -37,13 +35,13 @@ router.post("/register", async (req, res, next) => {
         username,
         password,
       });
-    
+
       if (!user) {
         res.status(400);
-      next({
-        name: "UserCreationError",
-        message: "Bad Request",
-      });
+        next({
+          name: "UserCreationError",
+          message: "Bad Request",
+        });
       } else {
         const token = jwt.sign(
           {
@@ -69,68 +67,64 @@ router.post("/register", async (req, res, next) => {
 });
 
 // POST /api/users/login
-router.post('/login', async (req, res, next) => {
-    const { username, password } = req.body;
-    
-    if (!username || !password) {
+router.post("/login", async (req, res, next) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    next({
+      name: "MissingCredentialsError",
+      message: "Please supply both a username and password",
+    });
+  }
+
+  try {
+    const user = await getUserByUsername(username);
+    const hashedPassword = user.password;
+    const passwordsMatch = await bcrypt.compare(password, hashedPassword);
+    if (passwordsMatch) {
+      const token = jwt.sign(user, JWT_SECRET);
+      res.send({ user, message: "you're logged in!", token: `${token}` });
+    } else {
       next({
-        name: "MissingCredentialsError",
-        message: "Please supply both a username and password"
+        name: "IncorrectCredentialsError",
+        message: "Username or password is incorrect",
       });
     }
-  
-    try {
-      const user = await getUserByUsername(username);
-      const hashedPassword = user.password;
-      const passwordsMatch = await bcrypt.compare(password, hashedPassword);
-      if (passwordsMatch) {
-        const token = jwt.sign(user, JWT_SECRET)
-        res.send({ user, message: "you're logged in!", token: `${token}` });
-      } else {
-        next({ 
-          name: 'IncorrectCredentialsError', 
-          message: 'Username or password is incorrect'
-        });
-      }
-    } catch(error) {
-      next(error);
-    }
-  });
+  } catch (error) {
+    next(error);
+  }
+});
 
 // GET /api/users/me
 
-router.get("/me", requireUser, async (req, res, next)=> {
-    try {
-        res.send(req.user)
-    } catch (error) {
-        next (error)
-    }
-})
+router.get("/me", requireUser, async (req, res, next) => {
+  try {
+    res.send(req.user);
+  } catch (error) {
+    next(error);
+  }
+});
 
 // GET /api/users/:username/routines
-router.get("/:username/routines", async (req, res, next) => { 
-    const { username } = req.params;
-    try {
-        const user = await getUserByUsername(username)
-        if(!user){
-            next({ 
-                name: 'UserNotfound', 
-                message: 'User not found'
-              });}
-              else if((req.user && req.user.id === user.id)) {
-                const userR = await getAllRoutinesByUser(user)
-                res.send(userR)
-              } else {
-        const publicR = await getPublicRoutinesByUser(user);
-        res.send(publicR)
-
-              }
-        
-
-        
-    } catch ({ name, message }) {
-    next ({ name, message })
-    }}
- )
+router.get("/:username/routines", async (req, res, next) => {
+  const { username } = req.params;
+  try {
+    const user = await getUserByUsername(username);
+    if (!user) {
+      next({
+        name: "UserNotfound",
+        message: "User not found",
+      });
+    } else if (req.user && req.user.id === user.id) {
+      const userR = await getAllRoutinesByUser(user);
+      res.send(userR);
+    } else {
+      const publicR = await getPublicRoutinesByUser(user);
+      res.send(publicR);
+    }
+  } catch ({ name, message }) {
+    next({ name, message });
+  }
+});
 
 module.exports = router;

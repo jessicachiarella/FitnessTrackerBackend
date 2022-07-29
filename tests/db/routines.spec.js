@@ -141,7 +141,6 @@ describe("DB Routines", () => {
     it("should include the public routine", async () => {
       const routines = await getAllRoutines();
       expectRoutinesToContainRoutine(routines, fakeRoutine);
-      console.log(routines, "!!!!!!!!!!!!!!!!!!!!!!!!")
     });
     
     it("Should include the private routine", async () => {
